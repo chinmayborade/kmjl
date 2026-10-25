@@ -186,7 +186,7 @@ export const PipelineCanvasView: React.FC = () => {
             Interactive Day-Ahead Procurement Pipeline Canvas
           </h2>
           <p className="section-subtitle">
-            Visual workflow connecting Elexon BMRS ingestion, Day D-1 cutoff enforcement, zero look-ahead decision selection, and risk hedging.
+            Visual workflow connecting national wind generation data, Day D-1 cutoff enforcement, zero look-ahead decision selection, and risk hedging.
           </p>
         </div>
 

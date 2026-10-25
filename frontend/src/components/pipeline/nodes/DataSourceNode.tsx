@@ -10,8 +10,8 @@ export const DataSourceNode: React.FC<{ data: { totalForecasts: number; totalAct
           <Database size={18} />
         </div>
         <div>
-          <div className="rf-node-title">Elexon BMRS Feed</div>
-          <div className="rf-node-subtitle">WINDFOR & FUELHH Ingestion</div>
+          <div className="rf-node-title">National Wind Feed</div>
+          <div className="rf-node-subtitle">Forecast & Grid Outturn Stream</div>
         </div>
       </div>
 

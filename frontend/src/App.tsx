@@ -130,7 +130,7 @@ const PortalApp: React.FC = () => {
         color: 'var(--text-muted)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <span>UK Power Procurement Desk &bull; Elexon BMRS WINDFOR &amp; FUELHH Feeds</span>
+          <span>UK Power Procurement Desk &bull; National Grid Transmission &amp; Outturn Feeds</span>
           <span>Scope: January 2026 Purchase Decisions</span>
           <span>Zero Look-Ahead Certified</span>
         </div>
