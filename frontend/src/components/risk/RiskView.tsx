@@ -211,38 +211,6 @@ export const RiskView: React.FC = () => {
         </div>
       </div>
 
-      {/* Downside Hedging Advisory Note for Power Buyers */}
-      <div style={{
-        background: 'var(--bg-glass)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '18px 24px',
-        display: 'flex',
-        gap: '16px',
-        alignItems: 'flex-start',
-      }}>
-        <div style={{ 
-          width: '36px', 
-          height: '36px', 
-          borderRadius: 'var(--radius-md)', 
-          background: 'var(--amber-bg)', 
-          color: 'var(--amber-light)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <AlertTriangle size={20} />
-        </div>
-        <div>
-          <h4 style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-            Power Procurement Hedging Rule-of-Thumb
-          </h4>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-            Because the signed distribution exhibits a positive skew (Mean Bias = +{meanBias.toFixed(1)} MW), wind generation systematically under-delivered relative to Day-Ahead forecasts in January 2026. Power procurement desks should maintain a flexible thermal/interconnector reserve buffer corresponding to the P10 downside risk interval to prevent costly balancing penalty exposure.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
