@@ -1,0 +1,13 @@
+services:
+  portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATA_DIR=/app/data
+      - DEBUG=false
+    volumes:
+      - ./data:/app/data

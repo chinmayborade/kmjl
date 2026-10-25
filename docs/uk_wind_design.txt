@@ -1,0 +1,416 @@
+--- PAGE 1 ---
+UK Wind Forecast Portal: Design and Delivery
+Document
+Prepared for: Full Stack SWE challenge (Elexon wind forecasts vs actuals) Status: Draft v1
+for build
+1. Purpose
+This document turns the product manager's brief into a buildable plan. It covers the
+problem as we understand it, the assumptions we are making, the data logic, the
+architecture, the API, the UI, testing, deployment, the 16-hour plan, and the outline for
+both parts of the video. It is meant to be the single reference while building, and the base
+for the README and the tech-lead walkthrough.
+2. Problem Understanding
+The client is a UK energy utility. Their day-ahead buying team must decide, on day D-1, how
+much power to buy for delivery day D. Wind is weather-dependent, so the amount to
+procure from other sources (for example thermal plants) is demand minus expected wind.
+They have only wind forecasts to rely on, and those forecasts have errors.
+The portal must let them:
+1. See the latest wind generation forecast that was actually available when they had to
+make the decision.
+2. Measure forecast accuracy quantitatively so they can plan around the expected error.
+Scope is limited to national-level wind data from Elexon only, for purchase decisions made
+in January 2026.
+What a good answer looks like
+The forecast shown for a delivery day is the latest one published before the decision
+cutoff, never a later one (no hindsight).
+Accuracy is reported in a way a trader can act on: in megawatts, by forecast horizon,
+with error ranges rather than a single number.
+The tool states its assumptions openly (cutoff time, time zone, metric definitions).
+UK Wind Forecast Portal: Design and Delivery Document
+Page 1 of 10
+
+--- PAGE 2 ---
+3. Assumptions and Open Questions
+Open questions to confirm with the PM if possible: which auction the team uses (affects
+cutoff), and whether they prefer errors in MW or as a percentage.
+4. Data Sources
+4.1 Actuals (FUELHH)
+Endpoint: Elexon BMRS datasets FUELHH stream.
+Filter: fuelType equals WIND.
+Key fields: startTime (30-minute resolution), generation (MW).
+#
+Item
+Working assumption
+Action
+A1
+Decision cutoff
+Configurable. Default to a
+documented time on D-1 (UK
+local time) approximating day-
+ahead auction gate closure
+Verify the exact auction gate
+closure time from the market
+operator's published rules
+and cite it in the README
+A2
+Scope of dates
+Delivery days 1 to 31 January
+2026
+Fetch a padded window,
+since forecasts for early
+January were published in
+late December
+A3
+Time zone
+Elexon timestamps are UTC.
+Display in UK local time (GMT
+in January, so equal to UTC)
+State this in the UI footer
+A4
+Multiple forecasts
+per target
+Many publishes exist for the
+same target time
+Pick the latest publish at or
+before the cutoff
+A5
+Data gaps
+Missing actual or forecast
+periods are possible
+Show gaps as gaps, report
+coverage counts, never
+silently fill
+A6
+Demand
+Out of scope. Only wind is
+analysed
+Mention as a future
+extension (net demand to
+buy)
+A7
+Data refresh
+Data is historical for January
+2026, so it can be cached and
+shipped with the app
+Provide a refresh script, but
+do not call Elexon at request
+time
+UK Wind Forecast Portal: Design and Delivery Document
+Page 2 of 10
+
+--- PAGE 3 ---
+4.2 Forecasts (WINDFOR)
+Endpoint: Elexon BMRS datasets WINDFOR stream.
+Key fields: startTime (target time), publishTime (when the forecast was made),
+generation (forecast MW).
+4.3 Data quirks to check during exploration
+Whether WINDFOR is hourly or half-hourly, and how far ahead it goes. If hourly, decide
+how to align with 30-minute actuals (either compare on the hour only, or forward-fill
+within the hour, documented explicitly).
+Duplicate or overlapping publishes for the same target.
+Gaps, zero values, and negative or null values.
+API pagination and date-range limits on the stream endpoints.
+5. Core Logic
+5.1 Decision forecast (the most important rule)
+For a delivery day D and cutoff time C on day D-1:
+1. Take all forecast rows whose startTime falls on day D.
+2. Keep only rows with publishTime <= C.
+3. For each startTime, keep the row with the latest publishTime.
+4. Result: the set of target periods for day D as the trader would have seen them.
+Implementation note: in pandas, sort by publishTime, filter, then drop_duplicates on
+startTime keeping the last. This is simple and easy to unit test. Avoid clever joins where a
+plain filter is clearer.
+5.2 Forecast horizon
+Horizon = startTime minus publishTime, in hours. Every metric can be sliced by horizon
+bucket (for example 0 to 6h, 6 to 12h, 12 to 24h, 24 to 48h, 48h+). For the decision view, the
+relevant horizon is whatever the cutoff implies for each period (roughly 14 to 38 hours for
+a 10:00 cutoff on D-1).
+5.3 Joining with actuals
+Inner join the decision forecast to actuals on startTime. Keep an outer join internally to
+count missing data, and expose coverage numbers (periods with forecast, with actual,
+with both).
+UK Wind Forecast Portal: Design and Delivery Document
+Page 3 of 10
+
+--- PAGE 4 ---
+6. Accuracy Metrics
+Define error = forecast minus actual (positive means over-forecast, which risks under-
+buying other power).
+Note on MAPE: avoid it as a headline metric. Wind output can approach zero, which makes
+percentage error unstable. If shown at all, explain the caveat.
+Error-aware view
+Using historical signed-error quantiles (by horizon bucket), draw a band around the
+forecast, for example forecast minus P90 error up to forecast minus P10 error. This
+answers the client's second need: decisions that consider the quantified error. Caveat for
+the video: in-sample quantiles over one month are descriptive, not a guarantee. Say so
+plainly.
+7. Architecture
+flowchart LR
+  E[Elexon BMRS API] -->|refresh script| I[Ingestion + normalise]
+  I --> S[(Parquet / SQLite cache)]
+  S --> A[FastAPI service]
+  A -->|JSON| F[React SPA]
+  F --> U[Trader]
+Metric
+Definition
+Why it is included
+Bias (ME)
+Mean of error
+Shows systematic over or
+under-forecasting
+MAE
+Mean of absolute error
+Typical miss in MW, easy to
+explain
+RMSE
+Square root of mean squared error
+Penalises large misses, which
+cost the most
+nMAE
+MAE divided by mean actual
+generation (or by installed capacity
+if a source is allowed)
+Comparable across periods
+Error percentiles
+P50, P90, P95 of absolute error
+Direct input to hedging
+decisions
+Signed error
+quantiles
+P10 and P90 of signed error
+Builds the uncertainty band
+UK Wind Forecast Portal: Design and Delivery Document
+Page 4 of 10
+
+--- PAGE 5 ---
+Design principles
+One deployable container: FastAPI serves the API and the built React static files. One
+URL, no CORS issues, simple deployment.
+Data is ingested ahead of time and read from local storage. The app does not depend
+on Elexon being up during the demo.
+Pure functions for the logic (decision selection, metrics) separate from I/O, so they are
+easy to test.
+Configuration through environment variables (cutoff time, data path, default dates).
+Technology choices
+8. API Design
+All endpoints are read-only GETs under /api. Dates are ISO 8601 in UTC.
+Layer
+Choice
+Reason
+Backend
+Python 3.12, FastAPI, pandas, httpx
+Fast to build, typed, auto-generated API
+docs
+Storage
+Parquet files (or SQLite)
+No database server, trivially shippable
+Frontend
+React with Vite, TypeScript,
+Recharts or Plotly
+Quick to build, good time-series charts
+Packaging
+Docker multi-stage build
+Build frontend in a Node stage, run in a
+slim Python stage
+Hosting
+Heroku (container stack) or similar
+Vercel is a poor fit for a long-running
+Python container
+Tests
+pytest, and Vitest for key UI helpers
+Focus on core logic
+Endpoint
+Parameters
+Returns
+/api/health
+none
+Status and data coverage dates
+/api/config
+none
+Default cutoff, time zone, available
+date range
+/api/decision-
+forecast
+delivery_date, cutoff
+(optional)
+Per-period forecast available at
+cutoff, with publishTime and horizon,
+plus actual if known
+UK Wind Forecast Portal: Design and Delivery Document
+Page 5 of 10
+
+--- PAGE 6 ---
+Responses should include a small meta block: cutoff used, time zone, and row counts, so
+the UI can show the assumptions on screen.
+9. Frontend Design
+Three views in one single-page app, with a shared date picker and a visible assumptions
+panel.
+1. Decision view: choose a delivery date. Show the 48 half-hourly forecast values
+available at the cutoff, with publishTime shown, and the actual overlaid once the day
+has passed. Headline cards: total forecast energy, peak, and minimum.
+2. Accuracy view: metric cards (MAE, RMSE, bias, P90 error), error histogram, and error
+versus horizon chart. Include a clear plain-language explanation of each metric.
+3. Risk view: forecast with the uncertainty band, and a simple readout such as "in 90
+percent of past cases the wind outturn was within X MW of the forecast at this
+horizon".
+UX rules: loading and empty states, explicit units (MW), consistent time zone, and no
+chart that cannot be explained in one sentence.
+Endpoint
+Parameters
+Returns
+/api/forecast-vs-
+actual
+start, end, horizon_hours
+Time series of forecast and actual for
+charting
+/api/metrics
+start, end, horizon bucket
+(optional)
+Bias, MAE, RMSE, nMAE, percentiles,
+coverage counts
+/api/metrics/by-
+horizon
+start, end
+Metrics per horizon bucket
+/api/error-
+distribution
+start, end
+Histogram bins of signed error
+UK Wind Forecast Portal: Design and Delivery Document
+Page 6 of 10
+
+--- PAGE 7 ---
+10. Repository Layout
+.
+├── backend/
+│   ├── app/
+│   │   ├── main.py            # FastAPI app, static file mount
+│   │   ├── config.py          # env-driven settings
+│   │   ├── routes/            # API routers
+│   │   ├── services/          # decision_forecast.py, metrics.py
+│   │   └── data/              # loaders for cached data
+│   ├── scripts/refresh_data.py # pulls Elexon data into cache
+│   ├── tests/
+│   └── requirements.txt
+├── frontend/
+│   ├── src/ (components, views, api client, charts)
+│   └── package.json
+├── data/                      # cached January 2026 data
+├── Dockerfile
+├── docker-compose.yml         # local run
+├── README.md
+└── docs/ (this document, architecture diagram)
+The README must include: directory guide, how to run locally (Docker and non-Docker),
+how to refresh data, the deployed link, a statement of AI tool usage, and the assumptions
+list from section 3.
+11. Testing Strategy
+Prioritise by risk, not by coverage numbers.
+Decision selection: synthetic data proving that forecasts published after the cutoff are
+excluded, that the latest earlier publish wins, and that boundary equality (publishTime
+equal to cutoff) behaves as documented.
+Metrics: hand-computed small examples for bias, MAE, RMSE and percentiles.
+Alignment: hourly versus half-hourly handling.
+API: a few contract tests with FastAPI TestClient against a tiny fixture dataset.
+Smoke test in CI: build the Docker image and hit /api/health.
+12. Deployment
+Multi-stage Dockerfile: Node stage builds the React app, Python stage installs
+dependencies, copies the build output and cached data, and runs uvicorn on the port
+provided by the platform.
+UK Wind Forecast Portal: Design and Delivery Document
+Page 7 of 10
+
+--- PAGE 8 ---
+Heroku container deployment, with the app reading the PORT variable.
+Verify the public URL in an incognito window before submitting, as the brief requires.
+Keep the repo anonymous (random name), public, with no secrets committed. Elexon
+BMRS data endpoints used here do not require credentials in normal use, but confirm
+during exploration.
+13. Plan (16-hour cap)
+Total about 17, so trim the frontend polish first if time runs short. Do not cut tests on the
+decision logic or the video.
+14. Risks and Mitigations
+Block
+Hours
+Output
+Data exploration and quirks
+2
+Notes on horizons, gaps, resolution
+Ingestion and cache
+2
+refresh script, Parquet files
+Core logic and tests
+3
+decision forecast, metrics, tests
+API
+1.5
+endpoints, fixtures
+Frontend
+4
+three views, charts
+Docker and deploy
+1.5
+live URL
+README and docs
+1
+complete README
+Video
+2
+recorded and uploaded
+Risk
+Mitigation
+Wrong cutoff makes the whole analysis
+misleading
+Make it configurable, document the source,
+show it on screen
+Look-ahead leakage (using later forecasts)
+Unit tests plus an explicit "published at"
+column in the UI
+Elexon API slow or limited
+Pre-cache data, no live calls at request time
+Hourly forecast against half-hourly actuals
+Decide early, document, test
+Over-scoping
+Hold to three views and seven endpoints
+UK Wind Forecast Portal: Design and Delivery Document
+Page 8 of 10
+
+--- PAGE 9 ---
+15. Video Outline (10 minutes maximum)
+Part 1: Client pitch (about 4.5 minutes)
+1. The problem in the client's words: buying the gap between demand and wind, a day
+ahead, under uncertainty (45 seconds).
+2. Live demo, decision view: pick a January date and show exactly what they would have
+seen at the cutoff (90 seconds).
+3. Accuracy view: how good the forecasts were, in MW, by horizon (75 seconds).
+4. Risk view: how to use the error band when deciding how much to hedge (60 seconds).
+5. Close: what the pilot proves and the next steps, such as adding demand and other data
+(30 seconds).
+Part 2: Tech lead review (about 5 minutes)
+1. Architecture diagram and why one container (60 seconds).
+2. The decision-forecast rule and its tests, shown in code (90 seconds).
+3. Metrics definitions and the horizon slicing (60 seconds).
+4. Repo tour, config, and how to run (60 seconds).
+5. Practices: tests, Docker, assumptions list, AI tool disclosure, known limitations and
+what you would do next (30 seconds).
+Tip: script it, rehearse once, and record in one or two takes. The video is evaluated first, so
+a clear and confident walkthrough matters more than extra features.
+16. Definition of Done
+Deployed app reachable in incognito, showing January 2026 data.
+Decision view proven free of look-ahead by tests.
+Metrics documented and reproducible.
+Public anonymous repo with complete README including AI usage statement.
+Unlisted video under 10 minutes with both parts.
+Risk
+Mitigation
+Deployment issues late in the process
+Deploy a hello-world container in the first
+few hours
+Overstating the error band
+Label it as descriptive of January 2026 only
+UK Wind Forecast Portal: Design and Delivery Document
+Page 9 of 10
+
+--- PAGE 10 ---
+Submission form filled with all links verified.
+UK Wind Forecast Portal: Design and Delivery Document
+Page 10 of 10

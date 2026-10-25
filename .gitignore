@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and environments
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.env
+
+# Node & Frontend build
+node_modules/
+dist/
+.DS_Store
+
+# Large temporary files
+*.tmp
