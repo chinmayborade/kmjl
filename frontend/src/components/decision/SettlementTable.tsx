@@ -115,24 +115,24 @@ export const SettlementTable: React.FC<SettlementTableProps> = ({ periods }) => 
                 </span>
               </th>
               <th>Clock Time (UTC)</th>
-              <th onClick={() => handleSort('forecast_generation_mw')} style={{ cursor: 'pointer' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <th className="num-col" onClick={() => handleSort('forecast_generation_mw')} style={{ cursor: 'pointer' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   Forecast MW <ArrowUpDown size={12} />
                 </span>
               </th>
-              <th onClick={() => handleSort('actual_generation_mw')} style={{ cursor: 'pointer' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <th className="num-col" onClick={() => handleSort('actual_generation_mw')} style={{ cursor: 'pointer' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   Actual Outturn <ArrowUpDown size={12} />
                 </span>
               </th>
-              <th onClick={() => handleSort('error_mw')} style={{ cursor: 'pointer' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <th className="num-col" onClick={() => handleSort('error_mw')} style={{ cursor: 'pointer' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   Signed Error <ArrowUpDown size={12} />
                 </span>
               </th>
-              <th>Lead Horizon</th>
-              <th>P10 Floor</th>
-              <th>P90 Cap</th>
+              <th className="num-col">Lead Horizon</th>
+              <th className="num-col">P10 Floor</th>
+              <th className="num-col">P90 Cap</th>
               <th>Compliance</th>
             </tr>
           </thead>
@@ -146,13 +146,13 @@ export const SettlementTable: React.FC<SettlementTableProps> = ({ periods }) => 
                 <tr key={p.settlement_period}>
                   <td style={{ fontWeight: 600, color: 'var(--cyan-light)' }}>SP {p.settlement_period}</td>
                   <td className="tabular-nums">{timeDisplay} - {p.start_time ? new Date(new Date(p.start_time).getTime() + 30 * 60000).toISOString().slice(11, 16) : ''}</td>
-                  <td className="tabular-nums" style={{ fontWeight: 600, color: 'var(--cyan-light)' }}>
+                  <td className="tabular-nums num-col" style={{ fontWeight: 600, color: 'var(--cyan-light)' }}>
                     {p.forecast_generation_mw?.toLocaleString()} MW
                   </td>
-                  <td className="tabular-nums" style={{ fontWeight: 600, color: 'var(--emerald-light)' }}>
+                  <td className="tabular-nums num-col" style={{ fontWeight: 600, color: 'var(--emerald-light)' }}>
                     {p.actual_generation_mw != null ? `${p.actual_generation_mw.toLocaleString()} MW` : 'Pending'}
                   </td>
-                  <td className="tabular-nums">
+                  <td className="tabular-nums num-col">
                     {p.error_mw != null ? (
                       <span className={`badge-tag ${isOver ? 'amber' : isZero ? 'cyan' : 'emerald'}`}>
                         {p.error_mw > 0 ? `+${p.error_mw}` : p.error_mw} MW
@@ -161,13 +161,13 @@ export const SettlementTable: React.FC<SettlementTableProps> = ({ periods }) => 
                       'N/A'
                     )}
                   </td>
-                  <td className="tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                  <td className="tabular-nums num-col" style={{ color: 'var(--text-secondary)' }}>
                     +{p.horizon_hours}h
                   </td>
-                  <td className="tabular-nums" style={{ color: 'var(--amber-light)' }}>
+                  <td className="tabular-nums num-col" style={{ color: 'var(--amber-light)' }}>
                     {p.p10_bound_mw?.toFixed(0)} MW
                   </td>
-                  <td className="tabular-nums" style={{ color: 'var(--amber-light)' }}>
+                  <td className="tabular-nums num-col" style={{ color: 'var(--amber-light)' }}>
                     {p.p90_bound_mw?.toFixed(0)} MW
                   </td>
                   <td>

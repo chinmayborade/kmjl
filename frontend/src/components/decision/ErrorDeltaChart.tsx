@@ -56,7 +56,7 @@ export const ErrorDeltaChart: React.FC<ErrorDeltaChartProps> = ({ periods }) => 
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 0 }}>
           <XAxis dataKey="sp" hide />
-          <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v}`} />
+          <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v}`} />
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine y={0} stroke="rgba(255, 255, 255, 0.2)" strokeWidth={1} />
           <Bar dataKey="error" radius={[2, 2, 2, 2]}>
