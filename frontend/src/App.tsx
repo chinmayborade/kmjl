@@ -71,12 +71,6 @@ const PortalApp: React.FC = () => {
               <option value="14:00:00">14:00 UTC (Late)</option>
             </select>
           </div>
-
-          {/* Zero Look-Ahead Assurance Pill */}
-          <div className="live-badge" title="All forecasts strictly filtered by publishTime <= Cutoff(D-1)">
-            <span className="pulse-dot" />
-            <span>Zero Look-Ahead Live</span>
-          </div>
         </div>
       </header>
 
