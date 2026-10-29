@@ -138,10 +138,10 @@ python backend/scripts/run_benchmarks.py
 
 ## 5. Deployed Application Link
 
-- **Live Application URL:** `https://<YOUR-APP-NAME>.herokuapp.com` *(or Render / Vercel deployment URL)*
-- **API Documentation:** `https://<YOUR-APP-NAME>.herokuapp.com/docs`
+- **Live Application URL:** [https://kmjl.vercel.app](https://kmjl.vercel.app)
+- **API Documentation (Swagger):** [https://kmjl.vercel.app/docs](https://kmjl.vercel.app/docs)
 
-> *Note: Before submission, verify the live link in an incognito window.*
+> *Note: Verified accessible in incognito mode with zero look-ahead decision views and Swagger interactive API endpoints.*
 
 ---
 
