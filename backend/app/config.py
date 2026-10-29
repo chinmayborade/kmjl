@@ -14,8 +14,13 @@ class Settings(BaseSettings):
     # Base paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     _env_data = os.environ.get("DATA_DIR")
-    _default_data = (BASE_DIR / "data") if (BASE_DIR / "data").exists() else (BASE_DIR.parent / "data")
-    DATA_DIR: Path = Path(_env_data) if _env_data else _default_data
+    _candidates = [
+        Path(_env_data) if _env_data else None,
+        Path(__file__).resolve().parent.parent / "data",  # backend/data
+        BASE_DIR / "data",                                # root/data
+        BASE_DIR.parent / "data",                         # repo root/data
+    ]
+    DATA_DIR: Path = next((p for p in _candidates if p and p.exists() and (p / "actuals.parquet").exists()), Path(__file__).resolve().parent.parent / "data")
 
     # Operational defaults
     DEFAULT_CUTOFF_TIME: str = "12:00:00"

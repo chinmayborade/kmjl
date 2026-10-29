@@ -49,6 +49,11 @@ def select_decision_forecast(
     delivery_end = delivery_dt.replace(hour=23, minute=59, second=59)
 
     # 2. Strict Zero Look-Ahead Filtering
+    if forecasts_df.empty or "startTime" not in forecasts_df.columns:
+        forecasts_df = pd.DataFrame(columns=["publishTime", "startTime", "generation"])
+    if actuals_df.empty or "startTime" not in actuals_df.columns:
+        actuals_df = pd.DataFrame(columns=["publishTime", "startTime", "generation"])
+
     # All forecast rows targeting delivery date D (any publish time)
     all_day_forecasts = forecasts_df[
         (forecasts_df["startTime"] >= delivery_start)
