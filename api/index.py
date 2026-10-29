@@ -7,4 +7,8 @@ backend_dir = root_dir / "backend"
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.main import app
+try:
+    from app.main import app  # type: ignore[import-not-found]
+except ImportError:
+    from backend.app.main import app  # type: ignore[import-not-found]
+
