@@ -35,7 +35,7 @@ export const AccuracyView: React.FC = () => {
     );
   }
 
-  const horizons = horizonMetricsData?.horizons || [];
+  const horizons = horizonMetricsData?.horizons || horizonMetricsData?.buckets || [];
 
   // Prepare data for horizon comparison bar chart
   const horizonChartData = horizons.map((h) => ({

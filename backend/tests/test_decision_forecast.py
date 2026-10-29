@@ -126,3 +126,26 @@ def test_all_48_periods_present(synthetic_forecast_data, synthetic_actual_data):
     assert res["meta"]["total_periods_expected"] == 48
     assert res["delivery_date"] == "2026-01-15"
     assert "cutoff_applied" in res
+
+
+def test_lineage_audit_counts(synthetic_forecast_data, synthetic_actual_data):
+    """Verify cutoff audit counts: excluded, superseded, selected and zero leakage."""
+    res = select_decision_forecast(
+        synthetic_forecast_data,
+        synthetic_actual_data,
+        delivery_date="2026-01-15",
+        cutoff_time="12:00:00",
+    )
+
+    lineage = res["lineage"]
+    assert lineage["forecasts_targeting_day"] == 5
+    assert lineage["forecasts_excluded_post_cutoff"] == 2  # 12:00:01 and 16:00 publishes
+    assert lineage["forecasts_eligible"] == 3
+    assert lineage["forecasts_selected"] == 2  # one per target hour
+    assert lineage["forecasts_superseded"] == 1  # 08:00 publish replaced by 11:30
+    assert lineage["leaked_periods"] == 0
+    assert lineage["first_excluded_publish_time"].startswith("2026-01-14T12:00:01")
+
+    risk = res["risk"]
+    assert risk["p10_shortfall_mwh"] is not None and risk["p10_shortfall_mwh"] >= 0
+

@@ -24,10 +24,32 @@ export interface DecisionForecastSummary {
   day_mae_mw: number | null;
 }
 
+export interface DecisionLineage {
+  forecasts_targeting_day: number;
+  forecasts_eligible: number;
+  forecasts_selected: number;
+  forecasts_superseded: number;
+  forecasts_excluded_post_cutoff: number;
+  leaked_periods: number;
+  latest_publish_time_used: string | null;
+  first_excluded_publish_time: string | null;
+}
+
+export interface DecisionRiskSummary {
+  horizon_bucket: string | null;
+  quantile_source: 'empirical' | 'heuristic' | null;
+  p10_error_mw: number | null;
+  p90_error_mw: number | null;
+  avg_band_width_mw: number | null;
+  p10_shortfall_mwh: number | null;
+}
+
 export interface DecisionForecastResponse {
   delivery_date: string;
   cutoff_applied: string;
   summary: DecisionForecastSummary;
+  lineage?: DecisionLineage;
+  risk?: DecisionRiskSummary;
   periods: PeriodForecast[];
 }
 
@@ -94,7 +116,8 @@ export interface HorizonMetricsItem {
 export interface HorizonMetricsResponse {
   start_date: string;
   end_date: string;
-  horizons: HorizonMetricsItem[];
+  horizons?: HorizonMetricsItem[];
+  buckets?: HorizonMetricsItem[];
 }
 
 export interface DistributionBin {

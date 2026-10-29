@@ -24,7 +24,7 @@ import RiskQuantileNode from './nodes/RiskQuantileNode';
 import ProcurementOrderNode from './nodes/ProcurementOrderNode';
 import SettlementOutturnNode from './nodes/SettlementOutturnNode';
 import BlockedLookaheadNode from './nodes/BlockedLookaheadNode';
-import { ShieldCheck, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 const nodeTypes = {
   dataSource: DataSourceNode,
@@ -48,6 +48,8 @@ export const PipelineCanvasView: React.FC = () => {
   // Dynamic Node Definitions
   const nodes: Node[] = useMemo(() => {
     const summary = decisionData?.summary;
+    const lineage = decisionData?.lineage;
+    const risk = decisionData?.risk;
 
     return [
       {
@@ -55,9 +57,9 @@ export const PipelineCanvasView: React.FC = () => {
         type: 'dataSource',
         position: { x: 50, y: 160 },
         data: {
-          totalForecasts: healthData?.total_forecast_rows || 21024,
-          totalActuals: healthData?.total_actual_rows || 1728,
-          status: 'LIVE',
+          totalForecasts: healthData?.total_forecast_rows ?? null,
+          totalActuals: healthData?.total_actual_rows ?? null,
+          cacheLoaded: healthData?.cache_loaded ?? null,
         },
       },
       {
@@ -73,7 +75,11 @@ export const PipelineCanvasView: React.FC = () => {
         id: '2-blocked',
         type: 'blockedLookahead',
         position: { x: 740, y: 440 },
-        data: {},
+        data: {
+          excludedCount: lineage?.forecasts_excluded_post_cutoff ?? null,
+          firstExcludedPublishTime: lineage?.first_excluded_publish_time ?? null,
+          leakedPeriods: lineage?.leaked_periods ?? null,
+        },
       },
       {
         id: '3',
@@ -90,7 +96,14 @@ export const PipelineCanvasView: React.FC = () => {
         id: '4',
         type: 'riskQuantile',
         position: { x: 1100, y: 150 },
-        data: {},
+        data: {
+          horizonBucket: risk?.horizon_bucket ?? null,
+          quantileSource: risk?.quantile_source ?? null,
+          p10SignedError: risk?.p10_error_mw ?? null,
+          p90SignedError: risk?.p90_error_mw ?? null,
+          avgBandWidthMw: risk?.avg_band_width_mw ?? null,
+          p10ShortfallMwh: risk?.p10_shortfall_mwh ?? null,
+        },
       },
       {
         id: '5',
@@ -183,18 +196,11 @@ export const PipelineCanvasView: React.FC = () => {
         <div>
           <h2 className="section-title">
             <Zap size={20} color="var(--cyan-primary)" />
-            Interactive Day-Ahead Procurement Pipeline Canvas
+            Total Flow Overview
           </h2>
           <p className="section-subtitle">
             Visual workflow connecting national wind generation data, Day D-1 cutoff enforcement, zero look-ahead decision selection, and risk hedging.
           </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div className="badge-tag emerald">
-            <ShieldCheck size={13} />
-            <span>Zero Look-Ahead Certified</span>
-          </div>
         </div>
       </div>
 

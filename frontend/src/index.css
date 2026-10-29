@@ -181,6 +181,21 @@ body {
   outline: none;
 }
 
+.control-pill select option {
+  background-color: var(--bg-card);
+  color: #f8fafc;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.control-pill select option:hover,
+.control-pill select option:focus,
+.control-pill select option:checked {
+  background-color: var(--cyan-primary) !important;
+  color: #ffffff !important;
+}
+
 .control-pill input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
   cursor: pointer;

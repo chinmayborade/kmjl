@@ -8,6 +8,8 @@ __pycache__/
 .coverage
 htmlcov/
 venv/
+.venv/
+backend/.venv/
 .env
 
 # Node & Frontend build

@@ -49,12 +49,16 @@ def select_decision_forecast(
     delivery_end = delivery_dt.replace(hour=23, minute=59, second=59)
 
     # 2. Strict Zero Look-Ahead Filtering
-    # Forecasts targeting delivery date D that were published at or before cutoff
-    day_forecasts = forecasts_df[
+    # All forecast rows targeting delivery date D (any publish time)
+    all_day_forecasts = forecasts_df[
         (forecasts_df["startTime"] >= delivery_start)
         & (forecasts_df["startTime"] <= delivery_end)
-        & (forecasts_df["publishTime"] <= cutoff_datetime)
-    ].copy()
+    ]
+    post_cutoff_rows = all_day_forecasts[all_day_forecasts["publishTime"] > cutoff_datetime]
+
+    # Forecasts targeting delivery date D that were published at or before cutoff
+    day_forecasts = all_day_forecasts[all_day_forecasts["publishTime"] <= cutoff_datetime].copy()
+    eligible_count = len(day_forecasts)
 
     # 3. For each startTime, pick the latest publishTime
     if not day_forecasts.empty:
@@ -75,6 +79,8 @@ def select_decision_forecast(
 
     # 5. Build 48 half-hour settlement periods grid
     periods: List[Dict[str, Any]] = []
+    period_buckets: List[str] = []
+    quantile_source = "empirical"
     # Index forecasts by hour or exact timestamp
     forecast_map = {}
     for _, row in day_forecasts.iterrows():
@@ -119,6 +125,7 @@ def select_decision_forecast(
 
         if forecast_mw is not None:
             bucket = assign_horizon_bucket(horizon_hours if horizon_hours is not None else 24.0)
+            period_buckets.append(bucket)
             if horizon_quantiles and bucket in horizon_quantiles:
                 q = horizon_quantiles[bucket]
                 p10_err = q.get("p10", -1000.0)
@@ -129,6 +136,7 @@ def select_decision_forecast(
                 p90_bound_mw = round(max(0.0, forecast_mw - p10_err), 1)
             else:
                 # Default heuristic bounds (±15%) if historical quantiles unavailable
+                quantile_source = "heuristic"
                 p10_bound_mw = round(max(0.0, forecast_mw * 0.85), 1)
                 p90_bound_mw = round(forecast_mw * 1.15, 1)
 
@@ -156,6 +164,52 @@ def select_decision_forecast(
     day_bias = float(np.mean(valid_errors)) if valid_errors else 0.0
     day_mae = float(np.mean(np.abs(valid_errors))) if valid_errors else 0.0
 
+    # 7. Cutoff audit lineage (verified against the final selected output)
+    selected_publish_times = [
+        pd.Timestamp(p["publish_time"]) for p in periods if p["publish_time"] is not None
+    ]
+    leaked_periods = sum(1 for t in selected_publish_times if t > cutoff_datetime)
+    selected_count = len(day_forecasts)
+    lineage = {
+        "forecasts_targeting_day": int(len(all_day_forecasts)),
+        "forecasts_eligible": int(eligible_count),
+        "forecasts_selected": int(selected_count),
+        "forecasts_superseded": int(eligible_count - selected_count),
+        "forecasts_excluded_post_cutoff": int(len(post_cutoff_rows)),
+        "leaked_periods": int(leaked_periods),
+        "latest_publish_time_used": max(selected_publish_times).isoformat() if selected_publish_times else None,
+        "first_excluded_publish_time": (
+            post_cutoff_rows["publishTime"].min().isoformat() if not post_cutoff_rows.empty else None
+        ),
+    }
+
+    # 8. Day-level risk summary from P10/P90 envelope
+    banded = [
+        p for p in periods
+        if p["forecast_generation_mw"] is not None
+        and p["p10_bound_mw"] is not None
+        and p["p90_bound_mw"] is not None
+    ]
+    dominant_bucket: Optional[str] = (
+        max(set(period_buckets), key=period_buckets.count) if period_buckets else None
+    )
+    bucket_q = (horizon_quantiles or {}).get(dominant_bucket or "", {})
+    risk = {
+        "horizon_bucket": dominant_bucket,
+        "quantile_source": quantile_source if banded else None,
+        "p10_error_mw": round(bucket_q["p10"], 1) if "p10" in bucket_q else None,
+        "p90_error_mw": round(bucket_q["p90"], 1) if "p90" in bucket_q else None,
+        "avg_band_width_mw": (
+            round(float(np.mean([p["p90_bound_mw"] - p["p10_bound_mw"] for p in banded])), 1)
+            if banded else None
+        ),
+        # Extra energy to procure if wind outturn lands on the P10 (low-wind) bound
+        "p10_shortfall_mwh": (
+            round(sum((p["forecast_generation_mw"] - p["p10_bound_mw"]) * 0.5 for p in banded), 1)
+            if banded else None
+        ),
+    }
+
     return {
         "delivery_date": delivery_date,
         "cutoff_applied": cutoff_datetime.isoformat(),
@@ -167,6 +221,8 @@ def select_decision_forecast(
             "day_bias_mw": round(day_bias, 2),
             "day_mae_mw": round(day_mae, 2),
         },
+        "lineage": lineage,
+        "risk": risk,
         "periods": periods,
         "meta": {
             "total_periods_expected": 48,

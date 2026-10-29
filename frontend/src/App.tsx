@@ -91,7 +91,7 @@ const PortalApp: React.FC = () => {
           className={`nav-tab-btn ${activeTab === 'pipeline' ? 'active' : ''}`}
         >
           <GitBranch size={16} />
-          <span>Decision Pipeline Canvas (React Flow)</span>
+          <span>Total Flow Overview</span>
         </button>
 
         <button

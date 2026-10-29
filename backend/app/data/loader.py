@@ -251,6 +251,7 @@ class DataManager:
             "start_date": start_date or settings.MIN_DELIVERY_DATE,
             "end_date": end_date or settings.MAX_DELIVERY_DATE,
             "buckets": buckets,
+            "horizons": buckets,
         }
 
     def get_error_distribution(

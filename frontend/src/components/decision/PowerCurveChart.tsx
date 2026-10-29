@@ -113,7 +113,7 @@ export const PowerCurveChart: React.FC<PowerCurveChartProps> = ({ periods }) => 
   return (
     <div style={{ width: '100%', height: 420 }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+        <ComposedChart data={chartData} margin={{ top: 12, right: 20, left: 35, bottom: 25 }}>
           <defs>
             <linearGradient id="bandGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--amber-primary)" stopOpacity={0.2} />
@@ -133,6 +133,14 @@ export const PowerCurveChart: React.FC<PowerCurveChartProps> = ({ periods }) => 
             fontSize={11}
             tickLine={false}
             tickFormatter={(sp) => (sp % 4 === 1 ? `SP ${sp}` : '')}
+            label={{
+              value: 'Settlement Period (SP 1–48 · 30-min intervals · 00:00–24:00 UTC)',
+              position: 'insideBottom',
+              offset: -12,
+              fill: 'var(--text-muted)',
+              fontSize: 11,
+              fontWeight: 500,
+            }}
           />
 
           <YAxis
@@ -141,6 +149,17 @@ export const PowerCurveChart: React.FC<PowerCurveChartProps> = ({ periods }) => 
             tickLine={false}
             tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
             domain={[0, 'auto']}
+            width={45}
+            label={{
+              value: 'Wind Generation (MW)',
+              angle: -90,
+              position: 'insideLeft',
+              offset: -20,
+              fill: 'var(--text-muted)',
+              fontSize: 11,
+              fontWeight: 500,
+              style: { textAnchor: 'middle' },
+            }}
           />
 
           <Tooltip content={<CustomTooltip />} />
