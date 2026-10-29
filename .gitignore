@@ -19,3 +19,8 @@ dist/
 
 # Large temporary files
 *.tmp
+
+# IDE & agent internal artifacts
+.agents/
+.taste-skill/
+skills-lock.json
