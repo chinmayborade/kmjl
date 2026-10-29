@@ -2,6 +2,8 @@
 
 A full-stack quantitative decision support application for a UK energy utility trading desk. It enables day-ahead procurement teams to evaluate wind generation forecasts available at auction gate closure, strictly enforces zero look-ahead bias, and quantifies forecast error distributions and risk percentiles across delivery days in **January 2026**.
 
+**Live Demo:** [https://kmjl.vercel.app](https://kmjl.vercel.app) &nbsp;|&nbsp; **API Docs:** [https://kmjl.vercel.app/docs](https://kmjl.vercel.app/docs) &nbsp;|&nbsp; **Repo:** [https://github.com/chinmayborade/kmjl](https://github.com/chinmayborade/kmjl)
+
 ---
 
 ## 1. Directory Structure
@@ -136,12 +138,17 @@ python backend/scripts/run_benchmarks.py
 
 ---
 
-## 5. Deployed Application Link
+## 5. Project Links & Deployment
 
-- **Live Application URL:** [https://kmjl.vercel.app](https://kmjl.vercel.app)
-- **API Documentation (Swagger):** [https://kmjl.vercel.app/docs](https://kmjl.vercel.app/docs)
+| Resource | URL | Description |
+| :--- | :--- | :--- |
+| **Live Web Application** | [https://kmjl.vercel.app](https://kmjl.vercel.app) | Production deployment hosted on Vercel |
+| **Interactive API Docs (Swagger)** | [https://kmjl.vercel.app/docs](https://kmjl.vercel.app/docs) | FastAPI OpenAPI documentation & test console |
+| **System Health & Coverage** | [https://kmjl.vercel.app/api/health](https://kmjl.vercel.app/api/health) | In-memory dataset verification & alignment count |
+| **Public GitHub Repository** | [https://github.com/chinmayborade/kmjl](https://github.com/chinmayborade/kmjl) | Full source code with Docker & test suite |
+| **Video Demo (YouTube)** | `https://youtu.be/<YOUR_VIDEO_ID>` *(Insert unlisted link)* | Part 1 (Client pitch ≤5 min) + Part 2 (Tech walkthrough ≤5 min) |
 
-> *Note: Verified accessible in incognito mode with zero look-ahead decision views and Swagger interactive API endpoints.*
+> *Note: All live links are verified accessible in an incognito window with full zero look-ahead decision views and settlement table functionality.*
 
 ---
 
