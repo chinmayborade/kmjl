@@ -21,6 +21,7 @@ dist/
 *.tmp
 
 # IDE & agent internal artifacts
+.vscode/
 .agents/
 .taste-skill/
 skills-lock.json
