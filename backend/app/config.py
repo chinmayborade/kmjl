@@ -13,7 +13,9 @@ class Settings(BaseSettings):
 
     # Base paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-    DATA_DIR: Path = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+    _env_data = os.environ.get("DATA_DIR")
+    _default_data = (BASE_DIR / "data") if (BASE_DIR / "data").exists() else (BASE_DIR.parent / "data")
+    DATA_DIR: Path = Path(_env_data) if _env_data else _default_data
 
     # Operational defaults
     DEFAULT_CUTOFF_TIME: str = "12:00:00"
