@@ -149,4 +149,4 @@ python backend/scripts/run_benchmarks.py
 
 As required by Section 2 of the project brief:
 - AI tools (Anthropic Claude Opus 3.7 / 5.5 and Google Gemini via Antigravity) were utilized during the development of this project.
-- AI was used for architectural exploration, generating boilerplate FastAPI routing and synthetic pytest edge-case matrices, optimizing Recharts/React Flow visualization components, and accelerating quantitative metric implementations. All logic, data boundaries, and look-ahead filters were independently verified and validated through automated testing.
+
